@@ -1,0 +1,21 @@
+{
+  "name": "Devlink CRM Next.js 16",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "features": {
+    "docker-in-docker": "latest"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "ms-azuretools.vscode-docker",
+        "GitHub.copilot",
+        "sdras.night-owl"
+      ]
+    }
+  },
+  "postCreateCommand": "npm install && npm install -g vercel",
+  "remoteUser": "node",
+  "forwardPorts": [3000]
+}
