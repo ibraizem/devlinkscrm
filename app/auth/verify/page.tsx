@@ -1,8 +1,6 @@
 'use client'
 
-'use client'
-
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Loader2, Mail, AlertCircle, CheckCircle2, ArrowLeft, RotateCw } from 'lucide-react'
@@ -17,7 +15,7 @@ import AnimatedParticles from '@/components/landing/AnimatedParticles'
 
 const RESEND_COOLDOWN = 60 // secondes
 
-export default function VerifyEmail() {
+function VerifyEmailContent() {
     const [isLoading, setIsLoading] = useState(true)
     const [isVerified, setIsVerified] = useState(false)
     const [email, setEmail] = useState<string>('')
@@ -248,5 +246,17 @@ export default function VerifyEmail() {
                 </div>
             </motion.div>
         </div>
+    )
+}
+
+export default function VerifyEmail() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        }>
+            <VerifyEmailContent />
+        </Suspense>
     )
 }
