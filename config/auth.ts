@@ -9,7 +9,6 @@ export const AUTH_ROUTES = {
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
   REGISTER_VERIFY: '/auth/register/verify',
-  REGISTER_SUCCESS: '/auth/register/success',
   DASHBOARD: '/dashboard',
 } as const;
 

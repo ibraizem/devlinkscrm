@@ -82,8 +82,8 @@ export function useOnboarding() {
                 throw signUpError
             }
 
-            // 2. Rediriger vers la page de succès avec l'email en paramètre
-            router.push(`/register/success?email=${encodeURIComponent(data.email)}`)
+            // 2. Rediriger vers la page de vérification d'email
+            router.push(`/auth/register/verify`)
 
         } catch (error) {
             console.error('Erreur lors de l\'inscription:', error)
