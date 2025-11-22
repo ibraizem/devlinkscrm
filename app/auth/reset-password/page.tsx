@@ -25,24 +25,32 @@ function ResetPasswordContent() {
   const searchParams = useSearchParams()
 
   const [isInitialSetup, setIsInitialSetup] = useState(false)
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
 
   useEffect(() => {
     // Vérifier si c'est une configuration initiale après inscription
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: any } }) => {
-      if (!session) {
-        // Si pas de session, vérifier s'il y a un utilisateur non confirmé
-        supabase.auth.getUser().then(({ data: { user } }) => {
-          if (!user) {
-            // Si aucun utilisateur n'est connecté ou en attente, rediriger vers la connexion
-            router.push('/auth/login')
-          } else if (user && !user.email_confirmed_at) {
-            // Si l'utilisateur n'a pas encore confirmé son email mais est en cours d'inscription
-            setIsInitialSetup(true)
-          }
-        })
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+          // Si aucun utilisateur n'est connecté ou en attente
+          // On ne redirige plus automatiquement pour permettre le flux d'inscription
+          console.log('Aucun utilisateur trouvé, mais on laisse continuer pour le flux d\'inscription')
+        } else if (user && !user.email_confirmed_at) {
+          // Si l'utilisateur n'a pas encore confirmé son email mais est en cours d'inscription
+          setIsInitialSetup(true)
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification de l\'authentification:', error)
+      } finally {
+        setIsLoadingAuth(false)
       }
-    })
-  }, [router])
+    }
+
+    checkAuth()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,16 +68,22 @@ function ResetPasswordContent() {
       await resetPassword(password)
       setIsSuccess(true)
 
-      // Redirection après 3 secondes
-      setTimeout(() => {
-        router.push('/auth/login')
-      }, 3000)
+      // Ne plus rediriger automatiquement
+      toast.success('Votre mot de passe a été configuré avec succès')
     } catch (err: any) {
       console.error('Erreur de réinitialisation:', err)
       setError(err.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    )
   }
 
   if (isSuccess) {
