@@ -12,6 +12,7 @@ export interface OnboardingData {
     industry: string
     teamSize: string
     email: string
+    password?: string
 }
 
 export const initialOnboardingData: OnboardingData = {
@@ -19,7 +20,8 @@ export const initialOnboardingData: OnboardingData = {
     organizationName: '',
     industry: '',
     teamSize: '',
-    email: ''
+    email: '',
+    password: ''
 }
 
 export function useOnboarding() {
@@ -43,17 +45,20 @@ export function useOnboarding() {
     const generateTemporaryPassword = useCallback((): string => {
     try {
       // Utilisation de l'API Web Crypto pour une meilleure sécurité
-      const array = new Uint32Array(16) // 128 bits d'entropie
+      // Générer 36 octets (288 bits) pour avoir une bonne entropie
+      const array = new Uint8Array(36)
       window.crypto.getRandomValues(array)
       
-      // Convertir en chaîne hexadécimale
-      return Array.from(array, byte => 
-        byte.toString(16).padStart(2, '0')
-      ).join('')
+      // Convertir en chaîne base64 et échapper les caractères spéciaux
+      const password = btoa(String.fromCharCode(...array))
+        .replace(/[+\/]/g, '') // Enlever les caractères spéciaux
+        .slice(0, 72) // S'assurer que le mot de passe ne dépasse pas 72 caractères
+      
+      return password
     } catch (error) {
       console.error('Erreur lors de la génération du mot de passe temporaire:', error)
-      // Solution de secours moins sécurisée en cas d'échec
-      return Math.random().toString(36).slice(-16) + Date.now().toString(36)
+      // Solution de secours avec une longueur limitée à 72 caractères
+      return (Math.random().toString(36).slice(2) + Date.now().toString(36)).slice(0, 72)
     }
   }, [])
 
@@ -66,6 +71,10 @@ export function useOnboarding() {
       }
       if (!data.organizationName?.trim()) {
         return { isValid: false, error: 'Le nom de l\'organisation est requis' }
+      }
+      // Validation de la longueur du mot de passe s'il est fourni
+      if (data.password && data.password.length > 72) {
+        return { isValid: false, error: 'Le mot de passe ne peut pas dépasser 72 caractères' }
       }
       return { isValid: true }
     }

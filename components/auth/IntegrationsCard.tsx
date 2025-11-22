@@ -15,7 +15,7 @@ type Integration = {
 export default function IntegrationsCard() {
     const integrations: Integration[] = [
         { name: 'AirCall', logo: '/integrations/aircall.svg', color: 'from-orange-500 to-red-500', category: 'crm', isPopular: true },
-        { name: 'Calendly', logo: '/integrations/calendly.png', color: 'from-blue-500 to-cyan-500', category: 'crm', isPopular: true },
+        { name: 'Calendly', logo: '/integrations/Calendly.png', color: 'from-blue-500 to-cyan-500', category: 'crm', isPopular: true },
         { name: 'DocuSign', logo: '/integrations/docusign.png', color: 'from-green-500 to-emerald-500', category: 'crm' },
         { name: 'WhatsApp', logo: '/integrations/whatsapp.svg', color: 'from-green-500 to-teal-500', category: 'messaging', isPopular: true },
         { name: 'LinkedIn', logo: '/integrations/linkedin.svg', color: 'from-blue-600 to-blue-700', category: 'social' },
@@ -24,11 +24,11 @@ export default function IntegrationsCard() {
         { name: 'Zapier', logo: '/integrations/zapier.png', color: 'from-orange-500 to-amber-500', category: 'automation', isPopular: true },
         { name: 'Google Drive', logo: '/integrations/google_drive.png', color: 'from-yellow-500 to-orange-500', category: 'marketing' },
         { name: 'Google Meet', logo: '/integrations/google-meet.png', color: 'from-indigo-500 to-purple-500', category: 'payment' },
-        { name: 'Cal.com', logo: '/integrations/cal.png', color: 'from-indigo-500 to-purple-500', category: 'payment' },
+        { name: 'Cal.com', logo: '/integrations/Cal.png', color: 'from-indigo-500 to-purple-500', category: 'payment' },
         { name: 'Make', logo: '/integrations/make.svg', color: 'from-indigo-500 to-purple-500', category: 'payment' },
         { name: 'Onoff Business', logo: '/integrations/onoff.jpg', color: 'from-indigo-500 to-purple-500', category: 'payment' },
         { name: 'Outlook', logo: '/integrations/outlook.svg', color: 'from-indigo-500 to-purple-500', category: 'payment' },
-        { name: 'SendGrid', logo: '/integrations/sendgrid.png', color: 'from-indigo-500 to-purple-500', category: 'payment' },
+        { name: 'SendGrid', logo: '/integrations/SendGrid.png', color: 'from-indigo-500 to-purple-500', category: 'payment' },
     ];
 
     return (
