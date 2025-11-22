@@ -321,7 +321,7 @@ function Navbar() {
               asChild
               className="group relative overflow-hidden px-5 py-2.5 text-base font-medium text-blue-700 hover:text-blue-800 hover:bg-blue-50 transition-all duration-300 rounded-lg"
             >
-              <Link href="/login" className="flex items-center gap-2">
+              <Link href="/auth/login" className="flex items-center gap-2">
                 <User className="h-5 w-5" />
                 <span>Connexion</span>
                 <span className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -translate-x-full group-hover:translate-x-full"></span>
@@ -341,7 +341,7 @@ function Navbar() {
               asChild
               className="group relative overflow-hidden bg-linear-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white shadow-lg shadow-blue-500/30 px-6 py-2.5 text-sm font-medium transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/40 rounded-lg"
             >
-              <Link href="/register" className="flex items-center gap-2">
+              <Link href="/auth/register" className="flex items-center gap-2">
                 <Rocket className="h-4 w-4" />
                 <span>Essai gratuit</span>
                 <span className="absolute inset-0 bg-linear-to-r from-white/20 via-white/40 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -translate-x-full group-hover:translate-x-[200%] w-[50%] skew-x-[-20deg]"></span>
