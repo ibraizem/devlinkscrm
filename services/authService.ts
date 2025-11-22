@@ -12,7 +12,8 @@ const SECURITY_CONFIG = {
     hasUppercase: /[A-Z]/,
     hasLowercase: /[a-z]/,
     hasNumber: /[0-9]/,
-    hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/,
+    // Liste des caractères spéciaux acceptés: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+    hasSpecialChar: /[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/,
   },
 };
 
@@ -131,8 +132,10 @@ export const secureSignIn = async (email: string, password: string) => {
 
 /**
  * Réinitialise le mot de passe avec validation
+ * @param newPassword Le nouveau mot de passe
+ * @param accessToken Le token d'accès pour la réinitialisation (optionnel)
  */
-export const resetPassword = async (newPassword: string) => {
+export const resetPassword = async (newPassword: string, accessToken?: string) => {
   // Valider le nouveau mot de passe
   const { isValid, message } = validatePassword(newPassword);
   if (!isValid) {
@@ -140,14 +143,43 @@ export const resetPassword = async (newPassword: string) => {
   }
 
   try {
-    const { data, error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (error) throw error;
-    return data;
+    let result;
+    
+    if (accessToken) {
+      // Si un token d'accès est fourni, l'utiliser pour la réinitialisation
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      
+      if (error) throw error;
+      result = data;
+    } else {
+      // Sinon, utiliser la session courante
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData?.session) {
+        throw new Error('Aucune session active. Veuillez vous reconnecter.');
+      }
+      
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      
+      if (error) throw error;
+      result = data;
+    }
+    
+    return result;
   } catch (error) {
     console.error('Erreur lors de la réinitialisation du mot de passe:', error);
+    
+    // Gestion des erreurs spécifiques
+    if (error instanceof Error) {
+      if (error.message.includes('AuthSessionMissingError')) {
+        throw new Error('La session a expiré. Veuillez redémarrer le processus de réinitialisation.');
+      }
+      throw error;
+    }
+    
     throw new Error('Une erreur est survenue lors de la réinitialisation du mot de passe');
   }
 };

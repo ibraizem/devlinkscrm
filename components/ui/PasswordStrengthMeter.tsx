@@ -68,73 +68,59 @@ export function PasswordStrengthMeter({
   };
 
   return (
-    <div className={`w-full space-y-3 mt-2 ${className}`}>
-      {/* Toggle password visibility */}
-      {onTogglePassword && (
-        <div className="flex justify-end mb-1">
+    <div className={`w-full space-y-2 ${className}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div className="text-xs font-medium text-gray-600">
+            Sécurité:
+          </div>
+          <div className="text-xs font-semibold">
+            <span className={strength.score <= 1 ? 'text-red-600' : strength.score <= 3 ? 'text-yellow-600' : 'text-green-600'}>
+              {getStrengthText(strength.score)}
+            </span>
+            <span className="text-gray-500 ml-1">
+              ({strength.score}/{strength.requirements.length})
+            </span>
+          </div>
+        </div>
+        {onTogglePassword && (
           <button
             type="button"
             onClick={onTogglePassword}
-            className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+            className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
             aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
           >
             {showPassword ? (
-              <>
-                <EyeOff className="w-4 h-4 mr-1" />
-                <span>Masquer</span>
-              </>
+              <EyeOff className="w-3.5 h-3.5" />
             ) : (
-              <>
-                <Eye className="w-4 h-4 mr-1" />
-                <span>Afficher</span>
-              </>
+              <Eye className="w-3.5 h-3.5" />
             )}
           </button>
-        </div>
-      )}
-      <div className="flex items-center justify-between mb-1">
-        <div className="text-sm font-medium text-gray-700">
-          Force du mot de passe:{' '}
-          <span
-            className={`font-semibold ${
-              strength.score <= 1 ? 'text-red-600' : strength.score <= 3 ? 'text-yellow-600' : 'text-green-600'
-            }`}
-          >
-            {getStrengthText(strength.score)}
-          </span>
-        </div>
-        <div className="text-xs text-gray-500">
-          {strength.score}/{strength.requirements.length}
-        </div>
+        )}
       </div>
       
-      <div className="w-full bg-gray-200 rounded-full h-2">
+      <div className="w-full bg-gray-200 rounded-full h-1.5">
         <div
-          className={`h-2 rounded-full transition-all duration-300 ${getStrengthColor(strength.score)}`}
+          className={`h-full rounded-full transition-all duration-300 ${getStrengthColor(strength.score)}`}
           style={{
             width: `${(strength.score / strength.requirements.length) * 100}%`,
           }}
         />
       </div>
 
-      <div className="space-y-1.5 mt-3">
-        <p className="text-xs font-medium text-gray-700">Exigences :</p>
-        <ul className="space-y-1.5">
-          {strength.requirements.map((req, index) => (
-            <li key={index} className="flex items-center">
-              {req.valid ? (
-                <Check className="w-3.5 h-3.5 text-green-500 mr-2" />
-              ) : (
-                <X className="w-3.5 h-3.5 text-gray-400 mr-2" />
-              )}
-              <span
-                className={`text-xs ${req.valid ? 'text-green-600' : 'text-gray-500'}`}
-              >
-                {req.text}
-              </span>
-            </li>
-          ))}
-        </ul>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1">
+        {strength.requirements.map((req, index) => (
+          <div key={index} className="flex items-center">
+            {req.valid ? (
+              <Check className="w-3 h-3 text-green-500 mr-1 shrink-0" />
+            ) : (
+              <X className="w-3 h-3 text-gray-300 mr-1 shrink-0" />
+            )}
+            <span className={`text-[10px] leading-tight ${req.valid ? 'text-green-600' : 'text-gray-400'}`}>
+              {req.text.split('(')[0].trim()}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

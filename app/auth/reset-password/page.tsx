@@ -31,21 +31,48 @@ function ResetPasswordContent() {
   const [isInitialSetup, setIsInitialSetup] = useState(false)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
   const [sessionChecked, setSessionChecked] = useState(false)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
 
   useEffect(() => {
     // Vérifier si c'est une configuration initiale après inscription
     const checkAuth = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        // Vérifier si on a un token dans l'URL (lien de réinitialisation)
+        const urlParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = urlParams.get('access_token');
+        const type = urlParams.get('type');
         
+        // Si c'est une première configuration après inscription
+        if (type === 'signup' && accessToken) {
+          setAccessToken(accessToken);
+          setIsInitialSetup(true);
+          setIsLoadingAuth(false);
+          setSessionChecked(true);
+          return;
+        }
+        
+        // Sinon, vérifier si c'est une réinitialisation normale
+        if (accessToken) {
+          setAccessToken(accessToken);
+          setIsLoadingAuth(false);
+          setSessionChecked(true);
+          return;
+        }
+        
+        // Si pas de token, vérifier la session existante
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         if (sessionError) throw sessionError
         
         if (session) {
+          // Si l'utilisateur est connecté mais n'a pas confirmé son email
           const { data: { user }, error: userError } = await supabase.auth.getUser()
           if (userError) throw userError
           
           if (user && !user.email_confirmed_at) {
             setIsInitialSetup(true)
+          } else {
+            // Si l'utilisateur est déjà confirmé, rediriger vers le tableau de bord
+            router.push('/dashboard')
           }
         }
         // Si pas de session, on continue pour permettre la réinitialisation
@@ -109,13 +136,42 @@ function ResetPasswordContent() {
     setError(null)
 
     try {
-      await resetPassword(password)
+      if (isInitialSetup && accessToken) {
+        // Pour une première configuration, on utilise le token dans l'en-tête
+        const { data, error } = await fetch('/api/auth/update-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: JSON.stringify({ password })
+        }).then(res => res.json())
+
+        if (error) throw new Error(error.message || 'Erreur lors de la mise à jour du mot de passe')
+        
+        // Marquer l'email comme vérifié si nécessaire
+        if (data.user && !data.user.email_confirmed_at) {
+          await supabase.auth.admin.updateUserById(data.user.id, {
+            email_confirm: true
+          })
+        }
+      } else {
+        // Pour une réinitialisation standard
+        await resetPassword(password, accessToken || undefined)
+      }
+      
       setIsSuccess(true)
       toast.success('Votre mot de passe a été configuré avec succès')
       
-      // Redirection après un court délai pour voir le message de succès
+      // Redirection après un court délai
       setTimeout(() => {
-        router.push('/auth/login')
+        // Si c'est une première configuration, on redirige vers le tableau de bord
+        if (isInitialSetup) {
+          router.push('/onboarding')
+        } else {
+          // Sinon, on redirige vers la page de connexion
+          router.push('/auth/login')
+        }
       }, 2000)
       
     } catch (err: any) {
@@ -204,7 +260,7 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col md:flex-row bg-linear-to-br from-blue-50 via-indigo-50 to-purple-100 overflow-hidden relative">
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-linear-to-br from-blue-50 via-indigo-50 to-purple-100 overflow-y-auto">
       {/* Animated Background Elements */}
       <AnimatedBackground />
 
@@ -216,7 +272,7 @@ function ResetPasswordContent() {
 
         <div className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-white/20">
           {/* Header */}
-          <div className="px-8 pt-8 pb-6 text-center">
+          <div className="px-6 pt-6 pb-4 text-center">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -244,8 +300,8 @@ function ResetPasswordContent() {
           </div>
 
           {/* Form Container */}
-          <div className="px-8 pb-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="px-6 pb-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -262,8 +318,8 @@ function ResetPasswordContent() {
                     <div className="shrink-0 pt-0.5">
                       <X className="h-5 w-5 text-red-500" />
                     </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-red-700">{error}</p>
+                    <div className="ml-2">
+                      <p className="text-xs font-medium text-red-700">{error}</p>
                     </div>
                   </motion.div>
                 )}
@@ -277,7 +333,7 @@ function ResetPasswordContent() {
               >
                 <label 
                   htmlFor="password" 
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-xs font-medium text-gray-700 mb-1"
                 >
                   Mot de passe
                 </label>
@@ -287,7 +343,7 @@ function ResetPasswordContent() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-3 py-2 pr-8 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     required
                     minLength={8}
                     placeholder="Nouveau mot de passe"
@@ -295,7 +351,7 @@ function ResetPasswordContent() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                   >
                     {showPassword ? (
@@ -309,7 +365,7 @@ function ResetPasswordContent() {
                   password={password} 
                   showPassword={showPassword}
                   onTogglePassword={() => setShowPassword(!showPassword)}
-                  className="mt-2"
+                  className="mt-1 text-xs"
                 />
               </motion.div>
 
@@ -321,7 +377,7 @@ function ResetPasswordContent() {
               >
                 <label 
                   htmlFor="confirmPassword" 
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-xs font-medium text-gray-700 mb-1"
                 >
                   Confirmer le mot de passe
                 </label>
@@ -331,7 +387,7 @@ function ResetPasswordContent() {
                     type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-3 py-2 pr-8 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     required
                     minLength={8}
                     placeholder="Confirmez le mot de passe"
@@ -339,7 +395,7 @@ function ResetPasswordContent() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                   >
                     {showPassword ? (
@@ -355,18 +411,18 @@ function ResetPasswordContent() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
-                className="pt-2"
+                className="pt-1"
               >
                 <button
                   type="submit"
                   disabled={isLoading || !isValidPassword || !password || !confirmPassword}
-                  className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
                     !isValidPassword || !password || !confirmPassword
                       ? 'bg-gray-400 cursor-not-allowed'
                       : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
                   } focus:outline-none transition-colors duration-200 ${
                     isLoading ? 'opacity-70 cursor-wait' : ''
-                  }`}
+                  }"
                 >
                   {isLoading ? (
                     <>

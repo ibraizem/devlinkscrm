@@ -8,6 +8,8 @@ export const AUTH_ROUTES = {
   REGISTER: '/auth/register',
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
+  VERIFY_EMAIL: '/auth/verify',
+  SUCCESS: '/auth/success',
   DASHBOARD: '/dashboard',
 } as const;
 
@@ -23,7 +25,8 @@ export const SECURITY_CONFIG = {
       hasUppercase: /[A-Z]/,
       hasLowercase: /[a-z]/,
       hasNumber: /[0-9]/,
-      hasSpecialChar: /[+\-!@#$%^&*()_=+\[{\]}\\|;:'",<.>/?`~]/,
+      // Liste des caractères spéciaux acceptés: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+      hasSpecialChar: /[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/,
     },
   },
 } as const;
