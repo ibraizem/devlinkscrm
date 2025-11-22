@@ -82,8 +82,8 @@ export function useOnboarding() {
                 throw signUpError
             }
 
-            // 2. Rediriger vers la page de vérification d'email avec une redirection complète
-            window.location.href = `${window.location.origin}/auth/register/verify`
+            // 2. Rediriger vers la page de configuration du mot de passe
+            window.location.href = `${window.location.origin}/auth/reset-password`
 
         } catch (error) {
             console.error('Erreur lors de l\'inscription:', error)

@@ -24,11 +24,22 @@ function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  const [isInitialSetup, setIsInitialSetup] = useState(false)
+
   useEffect(() => {
-    // Vérifier si l'utilisateur a accès à cette page
+    // Vérifier si c'est une configuration initiale après inscription
     supabase.auth.getSession().then(({ data: { session } }: { data: { session: any } }) => {
       if (!session) {
-        router.push('/auth/login')
+        // Si pas de session, vérifier s'il y a un utilisateur non confirmé
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (!user) {
+            // Si aucun utilisateur n'est connecté ou en attente, rediriger vers la connexion
+            router.push('/auth/login')
+          } else if (user && !user.email_confirmed_at) {
+            // Si l'utilisateur n'a pas encore confirmé son email mais est en cours d'inscription
+            setIsInitialSetup(true)
+          }
+        })
       }
     })
   }, [router])
@@ -63,14 +74,20 @@ function ResetPasswordContent() {
 
   if (isSuccess) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-linear-to-br from-blue-50 via-indigo-50 to-purple-100 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-indigo-50 to-purple-100 p-4">
         <AnimatedBackground />
         <motion.div 
-          className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 text-center relative z-20 border border-white/20"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 relative z-20 border border-white/20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
+          {isInitialSetup && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg text-sm text-blue-700">
+              <p className="font-medium">Bienvenue !</p>
+              <p>Veuillez définir votre mot de passe pour finaliser la création de votre compte.</p>
+            </div>
+          )}
           <motion.div 
             className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-50 mb-6"
             initial={{ scale: 0 }}
@@ -92,7 +109,7 @@ function ResetPasswordContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            Mot de passe mis à jour !
+            {isInitialSetup ? 'Compte créé avec succès !' : 'Mot de passe mis à jour !'}
           </motion.h2>
           
           <motion.p 
