@@ -8,7 +8,6 @@ export const AUTH_ROUTES = {
   REGISTER: '/auth/register',
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
-  REGISTER_VERIFY: '/auth/register/verify',
   DASHBOARD: '/dashboard',
 } as const;
 
@@ -24,7 +23,7 @@ export const SECURITY_CONFIG = {
       hasUppercase: /[A-Z]/,
       hasLowercase: /[a-z]/,
       hasNumber: /[0-9]/,
-      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/,
+      hasSpecialChar: /[+/-/!@#$%^&*(),.?":{}|<>]/,
     },
   },
 } as const;
