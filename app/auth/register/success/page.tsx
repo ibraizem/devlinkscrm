@@ -4,8 +4,9 @@ import { motion } from 'framer-motion'
 import { CheckCircle2, Mail, ArrowRight } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
-export default function RegistrationSuccess() {
+function RegistrationSuccessContent() {
     const searchParams = useSearchParams()
     const email = searchParams.get('email')
 
@@ -75,5 +76,24 @@ export default function RegistrationSuccess() {
                 </div>
             </motion.div>
         </div>
+    )
+}
+
+export default function RegistrationSuccess() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
+                    <div className="animate-pulse">
+                        <div className="h-20 w-20 bg-gray-200 rounded-full mx-auto mb-6"></div>
+                        <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-5/6 mx-auto mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-4/6 mx-auto"></div>
+                    </div>
+                </div>
+            </div>
+        }>
+            <RegistrationSuccessContent />
+        </Suspense>
     )
 }

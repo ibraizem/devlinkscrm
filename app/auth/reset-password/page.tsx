@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CheckCircle, X, ArrowLeft } from 'lucide-react'
+import { CheckCircle, X, ArrowLeft, Loader2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 import { supabase } from '@/lib/supabase/client'
@@ -12,12 +12,10 @@ import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter'
 import { AUTH_ROUTES, ANIMATION_CONFIG } from '@/config/auth'
 
 /**
- * Page de réinitialisation de mot de passe
- * Permet à l'utilisateur de définir un nouveau mot de passe après avoir reçu un lien de réinitialisation
- * 
- * @returns {JSX.Element} Composant de la page de réinitialisation de mot de passe
+ * Composant principal de réinitialisation de mot de passe
+ * Gère la logique de réinitialisation du mot de passe
  */
-export default function ResetPassword() {
+function ResetPasswordContent() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -312,6 +310,29 @@ export default function ResetPassword() {
           </div>
         </div>
   )
+}
+
+/**
+ * Page de réinitialisation de mot de passe avec Suspense
+ * Permet à l'utilisateur de définir un nouveau mot de passe après avoir reçu un lien de réinitialisation
+ * 
+ * @returns {JSX.Element} Composant de la page de réinitialisation de mot de passe avec Suspense
+ */
+export default function ResetPassword() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+                        <p className="text-gray-600">Chargement de la page de réinitialisation...</p>
+                    </div>
+                </div>
+            </div>
+        }>
+            <ResetPasswordContent />
+        </Suspense>
+    )
 }
 
 /**
