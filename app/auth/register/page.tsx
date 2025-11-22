@@ -60,7 +60,7 @@ export default function RegisterPage() {
                         <p className="text-xs text-gray-600">
                             Déjà inscrit ?{' '}
                             <Link
-                                href="/login"
+                                href="/auth/login"
                                 className="font-semibold text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                             >
                                 Se connecter →
