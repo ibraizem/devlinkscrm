@@ -18,12 +18,12 @@ export const SECURITY_CONFIG = {
   
   // Configuration pour la validation des mots de passe
   PASSWORD: {
-    MIN_LENGTH: parseInt(process.env.NEXT_PUBLIC_PASSWORD_MIN_LENGTH || '12', 10),
+    MIN_LENGTH: parseInt(process.env.NEXT_PUBLIC_PASSWORD_MIN_LENGTH || '8', 10),
     REQUIREMENTS: {
       hasUppercase: /[A-Z]/,
       hasLowercase: /[a-z]/,
       hasNumber: /[0-9]/,
-      hasSpecialChar: /[+/-/!@#$%^&*(),.?":{}|<>]/,
+      hasSpecialChar: /[+\-!@#$%^&*()_=+\[{\]}\\|;:'",<.>/?`~]/,
     },
   },
 } as const;

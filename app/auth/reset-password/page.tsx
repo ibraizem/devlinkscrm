@@ -3,13 +3,14 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CheckCircle, X, ArrowLeft, Loader2 } from 'lucide-react'
+import { CheckCircle, X, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 import { supabase } from '@/lib/supabase/client'
 import { resetPassword } from '@/services/authService'
 import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter'
 import { AUTH_ROUTES, ANIMATION_CONFIG } from '@/config/auth'
+import { div } from 'framer-motion/client'
 
 /**
  * Composant principal de réinitialisation de mot de passe
@@ -21,41 +22,84 @@ function ResetPasswordContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [passwordStrength, setPasswordStrength] = useState(0)
+  const [isValidPassword, setIsValidPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const [isInitialSetup, setIsInitialSetup] = useState(false)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
+  const [sessionChecked, setSessionChecked] = useState(false)
 
   useEffect(() => {
     // Vérifier si c'est une configuration initiale après inscription
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
-        if (!user) {
-          // Si aucun utilisateur n'est connecté ou en attente
-          // On ne redirige plus automatiquement pour permettre le flux d'inscription
-          console.log('Aucun utilisateur trouvé, mais on laisse continuer pour le flux d\'inscription')
-        } else if (user && !user.email_confirmed_at) {
-          // Si l'utilisateur n'a pas encore confirmé son email mais est en cours d'inscription
-          setIsInitialSetup(true)
+        if (sessionError) throw sessionError
+        
+        if (session) {
+          const { data: { user }, error: userError } = await supabase.auth.getUser()
+          if (userError) throw userError
+          
+          if (user && !user.email_confirmed_at) {
+            setIsInitialSetup(true)
+          }
         }
+        // Si pas de session, on continue pour permettre la réinitialisation
       } catch (error) {
         console.error('Erreur lors de la vérification de l\'authentification:', error)
+        setError('Erreur de vérification de session. Veuillez réessayer.')
       } finally {
         setIsLoadingAuth(false)
+        setSessionChecked(true)
       }
     }
 
     checkAuth()
   }, [])
 
+  const validatePassword = (pwd: string) => {
+    const hasMinLength = pwd.length >= 8
+    const hasUpperCase = /[A-Z]/.test(pwd)
+    const hasLowerCase = /[a-z]/.test(pwd)
+    const hasNumber = /[0-9]/.test(pwd)
+    const hasSpecialChar = /[+\-!@#$%^&*()_=+\[{\]}\\|;:'",<.>/?`~]/.test(pwd)
+    
+    const requirements = [
+      hasMinLength,
+      hasUpperCase,
+      hasLowerCase,
+      hasNumber,
+      hasSpecialChar
+    ]
+    
+    const score = requirements.filter(Boolean).length
+    setPasswordStrength(score)
+    
+    const isValid = hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar
+    setIsValidPassword(isValid)
+    
+    return isValid
+  }
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value
+    setPassword(newPassword)
+    validatePassword(newPassword)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     // Validation
+    if (!isValidPassword) {
+      setError('Veuillez respecter toutes les exigences de sécurité pour le mot de passe')
+      return
+    }
+
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas')
       return
@@ -67,12 +111,21 @@ function ResetPasswordContent() {
     try {
       await resetPassword(password)
       setIsSuccess(true)
-
-      // Ne plus rediriger automatiquement
       toast.success('Votre mot de passe a été configuré avec succès')
+      
+      // Redirection après un court délai pour voir le message de succès
+      setTimeout(() => {
+        router.push('/auth/login')
+      }, 2000)
+      
     } catch (err: any) {
       console.error('Erreur de réinitialisation:', err)
-      setError(err.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe')
+      const errorMessage = err.message.includes('AuthSessionMissingError') 
+        ? 'La session a expiré. Veuillez redémarrer le processus de réinitialisation.'
+        : err.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe'
+      
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -220,79 +273,103 @@ function ResetPasswordContent() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
+                className="space-y-1"
               >
                 <label 
                   htmlFor="password" 
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Nouveau mot de passe
+                  Mot de passe
                 </label>
                 <div className="relative">
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
+                    className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     required
                     minLength={8}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm focus:shadow-md"
-                    placeholder="••••••••"
+                    placeholder="Nouveau mot de passe"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
-                {password && <PasswordStrengthMeter password={password} />}
+                <PasswordStrengthMeter 
+                  password={password} 
+                  showPassword={showPassword}
+                  onTogglePassword={() => setShowPassword(!showPassword)}
+                  className="mt-2"
+                />
               </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
+                transition={{ duration: 0.3, delay: 0.15 }}
+                className="space-y-1"
               >
                 <label 
                   htmlFor="confirmPassword" 
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Confirmer le mot de passe
                 </label>
                 <div className="relative">
                   <input
                     id="confirmPassword"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     required
                     minLength={8}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm focus:shadow-md"
-                    placeholder="••••••••"
+                    placeholder="Confirmez le mot de passe"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
               </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
                 className="pt-2"
               >
-                <motion.button
+                <button
                   type="submit"
-                  disabled={isLoading}
-                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                  whileHover={{ 
-                    scale: isLoading ? 1 : 1.02,
-                    boxShadow: '0 4px 20px -5px rgba(59, 130, 246, 0.5)'
-                  }}
-                  className={`group relative w-full flex justify-center py-3.5 px-6 border border-transparent 
-                    text-base font-medium rounded-xl text-white bg-linear-to-r from-blue-500 to-blue-600 
-                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-white/90
-                    transition-all duration-200 ease-out
-                    ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-lg'}`}
+                  disabled={isLoading || !isValidPassword || !password || !confirmPassword}
+                  className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
+                    !isValidPassword || !password || !confirmPassword
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                  } focus:outline-none transition-colors duration-200 ${
+                    isLoading ? 'opacity-70 cursor-wait' : ''
+                  }`}
                 >
                   {isLoading ? (
-                    <motion.div 
-                      className="flex items-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
+                    <>
                       <svg 
                         className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" 
                         xmlns="http://www.w3.org/2000/svg" 
@@ -303,7 +380,7 @@ function ResetPasswordContent() {
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                       <span>Mise à jour en cours...</span>
-                    </motion.div>
+                    </>
                   ) : (
                     <motion.span
                       initial={{ opacity: 0 }}
@@ -321,12 +398,12 @@ function ResetPasswordContent() {
                       </svg>
                     </motion.span>
                   )}
-                </motion.button>
+                </button>
               </motion.div>
-              </form>
-              </div>
-              
-              <div className="mt-6 text-center">
+            </form>
+          </div>
+          
+          <div className="mt-6 text-center">
                 <motion.a
                   href={AUTH_ROUTES.LOGIN}
                   className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500 group transition-colors"
@@ -340,7 +417,7 @@ function ResetPasswordContent() {
             </div>
           </div>
         </div>
-  )
+  ) 
 }
 
 /**

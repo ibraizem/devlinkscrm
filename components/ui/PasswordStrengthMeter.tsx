@@ -1,14 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Eye, EyeOff } from 'lucide-react';
 
 type PasswordStrengthMeterProps = {
   password: string;
   minLength?: number;
+  showPassword?: boolean;
+  onTogglePassword?: () => void;
+  className?: string;
 };
 
-export function PasswordStrengthMeter({ password, minLength = 12 }: PasswordStrengthMeterProps) {
+export function PasswordStrengthMeter({ 
+  password, 
+  minLength = 8, 
+  showPassword = false, 
+  onTogglePassword,
+  className = '' 
+}: PasswordStrengthMeterProps) {
   const [strength, setStrength] = useState<{
     score: number;
     requirements: Array<{ text: string; valid: boolean }>;
@@ -34,7 +43,7 @@ export function PasswordStrengthMeter({ password, minLength = 12 }: PasswordStre
       },
       {
         text: 'Contient un caractère spécial (!@#$%^&*)',
-        valid: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+        valid: /[+-/!@#$%^&*(),.?":{}|<>]/.test(password),
       },
     ];
 
@@ -59,7 +68,30 @@ export function PasswordStrengthMeter({ password, minLength = 12 }: PasswordStre
   };
 
   return (
-    <div className="w-full space-y-3 mt-2">
+    <div className={`w-full space-y-3 mt-2 ${className}`}>
+      {/* Toggle password visibility */}
+      {onTogglePassword && (
+        <div className="flex justify-end mb-1">
+          <button
+            type="button"
+            onClick={onTogglePassword}
+            className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+            aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+          >
+            {showPassword ? (
+              <>
+                <EyeOff className="w-4 h-4 mr-1" />
+                <span>Masquer</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4 mr-1" />
+                <span>Afficher</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-1">
         <div className="text-sm font-medium text-gray-700">
           Force du mot de passe:{' '}

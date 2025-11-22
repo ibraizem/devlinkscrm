@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { CheckCircle2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMemo } from 'react'
+import { h1 } from 'framer-motion/client'
 
 // Constants
 const TOTAL_STEPS = 5
